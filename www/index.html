@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Roteiros</title>
+    <script type="text/javascript" chatset="utf-8" src="cordova.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>    
+    <script src="barcodescanner.js"></script>
+
+<script>
+	
+	  document.addEventListener("deviceready",onDeviceReady,false);		  
+      function onDeviceReady()
+      {            
+        db = window.openDatabase("Database", "1.0", "BancoRoteiro", 1000000);
+
+        db.transaction(insereDado,erroDB,successoDB);
+
+        db.transaction(mostraRoteiro, erroQuery, sucessoQuery);     
+
+        db.transaction(insereDadoP,erroDB,successoDB);
+
+        db.transaction(insereDadoMotorista,erroDB,successoDB);
+		
+		 console.log(navigator.camera);		
+	 }
+
+      function insereDado(tx)
+      {
+        tx.executeSql('DROP TABLE IF EXISTS ROTEIRO');
+        tx.executeSql('CREATE TABLE IF NOT EXISTS ROTEIRO (id INTEGER PRIMARY KEY ASC, nome)');
+        tx.executeSql('INSERT INTO ROTEIRO (id, nome) VALUES (1, "Barra")');
+        tx.executeSql('INSERT INTO ROTEIRO (id, nome) VALUES (2, "Campo Grande")');
+        tx.executeSql('INSERT INTO ROTEIRO (id, nome) VALUES (3, "Inoã")');		
+
+      }  
+      function erroDB(errorDB)
+      {
+        alert("Não foi possível criar o database : " + error);
+      }
+      function successoDB()
+      {
+        //alert("Database criada");
+      } 
+	  
+
+
+
+      function insereDadoMotorista(tx)
+      {
+        	tx.executeSql('DROP TABLE IF EXISTS MOTORISTA');
+        	tx.executeSql('CREATE TABLE IF NOT EXISTS MOTORISTA (login , senha ,idroteiro, ID INTEGER PRIMARY KEY AUTOINCREMENT)');
+        	tx.executeSql('INSERT INTO MOTORISTA (login, senha,idroteiro,id) VALUES ("ROTEIRO1", "123456",1,NULL)');
+        	tx.executeSql('INSERT INTO MOTORISTA (login, senha,idroteiro,id) VALUES ("ROTEIRO2", "123456",2,NULL)');
+        	tx.executeSql('INSERT INTO MOTORISTA (login, senha,idroteiro,id) VALUES ("ROTEIRO3", "123456",3,NULL)');
+		  
+      }     
+
+
+
+      function insereDadoP(tx)
+      {
+       
+        	tx.executeSql('DROP TABLE IF EXISTS PESSOAL');
+        	tx.executeSql('CREATE TABLE IF NOT EXISTS PESSOAL (id , nome ,idroteiro, cod INTEGER PRIMARY KEY AUTOINCREMENT)');
+        	tx.executeSql('INSERT INTO PESSOAL (id, nome,idroteiro,COD) VALUES (181170, "RUBENS PASSOS",1,NULL)');
+        	tx.executeSql('INSERT INTO PESSOAL (id, nome,idroteiro,COD) VALUES (186469, "CAROLINE MARTINS PORTO",2,NULL)');
+        	tx.executeSql('INSERT INTO PESSOAL (id, nome,idroteiro,COD) VALUES (187164, "VANESSA BRANDÃO",3,NULL)');				
+     	    tx.executeSql('INSERT INTO PESSOAL (id, nome,idroteiro,COD) VALUES (187117, "FRANCIALE MELO",2,NULL)');				
+     	    tx.executeSql('INSERT INTO PESSOAL (id, nome,idroteiro,COD) VALUES (189999, "TESTE",1,NULL)');			
+	     
+		    tx.executeSql('DROP TABLE IF EXISTS PESSOALDIAROTEIRO');				
+		
+      }     
+
+	
+	
+	
+	
+		function carregaRoteiro(){
+			db = window.openDatabase("Database", "1.0", "BancoRoteiro", 1000000);
+			db.transaction(mostraRoteiro,erroQuery);	
+		//	alert('cheguei aqui');
+		}
+
+		 function mostraRoteiro(tx) {
+     		tx.executeSql('SELECT * FROM ROTEIRO', [], sucessoQuery, erroQuery);
+	      }
+		  
+		 function escondeRoteiro(tx) {
+			//document.getElementById('roteiros').innerHTML ="";
+		       document.getElementById("roteiros").style.display = 'none';
+			
+			
+	      }	
+
+		 function escondeLogin(tx) {
+		       document.getElementById("acesso").style.display = 'none';
+	      }	
+		  
+		 function escondeLocalizacao(tx) {
+			//document.getElementById('localizacao').innerHTML ="";
+			
+		       document.getElementById("localizacao").style.display = 'none';
+
+	      }	
+
+
+
+		  		  		  		  
+		  function sucessoQuery(tx, results) {
+			 var len = results.rows.length;
+			 //alert("Tabela ROTEIRO2: " + len + " linhas");
+			 for (var i=0; i<len; i++){
+	//         alert("ID = " + results.rows.item(i).id + " Nome =  " + results.rows.item(i).nome);
+				
+	//			document.getElementById('roteiros').innerHTML += "<br>ID = " + results.rows.item(i).id + " Nome =  " + results.rows.item(i).nome;
+				document.getElementById('roteiros').innerHTML += "<br><button><a onclick='listaPessoal(" + results.rows.item(i).id + ")'>" + results.rows.item(i).nome + "</a></button><br>"				
+			 }
+		  }		  
+		    
+		      
+
+		
+		 function listaPessoal(id){
+			 document.getElementById("idroteiro").innerHTML = id
+			
+			 escondeRoteiro();
+			 escondeLocalizacao();
+			 db.transaction(mostraPessoal,erroQuery);	
+			 
+		 }
+		 
+
+	     function mostraPessoal(tx) {
+				
+				 var idroteiro =  document.getElementById("idroteiro").innerHTML
+
+   				 tx.executeSql("SELECT * FROM PESSOAL where ( idroteiro ISNULL or idroteiro = " + idroteiro  + ") ", [], sucessoQueryP, erroQuery);
+
+			     document.getElementById('pessoal').innerHTML = ""				
+
+			 	tx.executeSql("SELECT * FROM ROTEIRO WHERE ID = " + idroteiro,  [], function(tx, rs){
+				var linha = rs.rows.length;
+			    var nomeroteiro = rs.rows.item(0).nome;	
+						 document.getElementById('nomeroteiro').innerHTML = "<br><b>Roteiro: </b>" + nomeroteiro + "</br>"
+				})
+			
+	      }
+			
+
+
+
+		 
+		  function sucessoQueryP(tx, results) {
+			
+			 var  html = ""
+			 html += "<table border=1>"
+			 html += "<tr><td>MATRICULA</td><td>NOME</td></tr>"
+
+			 var len = results.rows.length;
+			 for (var i=0; i<len; i++){
+			 	html += "<tr><td><a href=javascript:Mat("+ results.rows.item(i).id +")>" + results.rows.item(i).id + "</a></td><td>" + results.rows.item(i).nome + "</td></tr>"				
+			 }
+			
+			 html += "</table>"
+	
+			 document.getElementById('pessoal').innerHTML += html	
+
+			 document.getElementById('pessoal').innerHTML += "<br><button><a onclick='CadastrarPessoal()'>Cadastrar Pessoal</a></button><button onClick='barcodescanner()'> QR Code </button><br>"				
+			 document.getElementById('pessoal').innerHTML += "<br><button><a onclick='VoltaTelaPrincipal()'>Logoff</a></button><br>"				
+
+		  }		  
+
+
+		function Mat(id){
+		
+			document.getElementById('matriculaaux').innerHTML  = id 
+			db.transaction(insereDadoPessoalDiario1,erroDB,successoDB);
+
+		}
+
+		function CadastrarPessoal(){
+	       		  
+		    habilitatela(6)	  
+	   		desabilitatela(3) 
+			 
+			var  html = ""
+			html += "<b>Matricula:</b> <input  type=number id=matricula size=8  /><br>"
+			html += "<b>Nome:</b> <input type=text id=nomepessoal size=30  ><br>"
+			html += "<input type=button name=bt_cadastrar value=Cadastrar  onClick=OperaPessoal()><input type=button name=bt_Voltar value=Voltar  onClick=VoltarLPessoal()>"
+		    document.getElementById('cadastrarpessoal').innerHTML = html
+			 
+		}
+		 
+		
+		 
+		 function habilitatela(x){
+		 
+		    if(x==6)
+			{
+   		       document.getElementById("cadastrarpessoal").style.display = 'block';
+			}
+
+		    if(x==3)
+			{
+   		       document.getElementById("pessoal").style.display = 'block';
+			}
+				
+			
+			
+		 }
+		 
+		 function desabilitatela(x){
+
+		    if(x==3)
+			{
+   		       document.getElementById("pessoal").style.display = 'none';
+			}
+		 
+		 
+		    if(x==6)
+			{
+   		       document.getElementById("cadastrarpessoal").style.display = 'none';
+			}
+
+
+		    if(x==7)
+			{
+   		       document.getElementById("pessoalD").style.display = 'none';
+			}
+
+		 }
+		 
+		 
+		 function VoltaTelaPrincipal(){
+		   
+		       document.getElementById("acesso").style.display = 'block';
+
+		       document.getElementById("roteiros").style.display = 'none';
+		       document.getElementById("localizacao").style.display = 'none';
+			   document.getElementById('nomeroteiro').innerHTML =""
+			   document.getElementById('pessoal').innerHTML =""
+			   document.getElementById('pessoalD').innerHTML =""
+
+			   document.getElementById('idroteiro').innerHTML =""
+
+			   document.getElementById('senha').value =""
+			   document.getElementById('login').value =""
+
+			   
+		 }
+
+		  function erroQuery(err) {
+			alert("Erro ao executar SQL: "+err.code);
+		  }
+		  
+			var sucessoLocalizacao = function(position) {
+				/*alert('Latitude: '          + position.coords.latitude          + '\n' +
+					  'Longitude: '         + position.coords.longitude         + '\n' +
+					  'Altitude: '          + position.coords.altitude          + '\n' +
+					  'Accuracy: '          + position.coords.accuracy          + '\n' +
+					  'Altitude Accuracy: ' + position.coords.altitudeAccuracy  + '\n' +
+					  'Heading: '           + position.coords.heading           + '\n' +
+					  'Speed: '             + position.coords.speed             + '\n' +
+					  'Timestamp: '         + position.timestamp                + '\n');*/
+					  
+					document.getElementById('latitude').innerHTML = position.coords.latitude
+					document.getElementById('longitude').innerHTML = position.coords.longitude 
+					  
+			};
+			
+			// onError Callback receives a PositionError object
+			//
+		  function erroLocalizacao(){
+			alert( 'code: ' +error.code + '\n' +
+					'message: ' + error.message + '\n');
+		  }	
+
+		  function localizacao(){
+			//alert('teste');
+		  //	navigator.geolocation.getCurrentPosition(sucessoLocalizacao,erroLocalizacao);			
+		  			navigator.geolocation.getCurrentPosition(sucessoLocalizacao, erroLocalizacao);	
+		  }
+		  
+		  
+		  function barcodescanner(){
+		   
+			 alert(1)
+			 cordova.plugins.barcodeScanner.scan(
+
+			  	function(result) {
+					
+					
+					document.getElementById('matriculaaux').innerHTML  = result.text
+					if(result.text!="")
+					{
+						 db.transaction(insereDadoPessoalDiario1,erroDB,successoDB);
+					}
+					
+					
+					
+				},
+				function (error) {
+					alert("Falha para escanear: "+ error);
+				},
+				{
+					"preferFrontCamera": false,
+					"showFlipCameraButton":true,
+					"prompt": "Posicione no QR do Crachá",
+					"formats": "QR_CODE,PDF_417",
+					"orientation" : "portrait"
+				}
+				)
+		  }
+		  
+	
+	 function insereDadoPessoalDiario1(tx)
+     {
+		    var idroteiro =  document.getElementById("idroteiro").innerHTML
+			mat = document.getElementById('matriculaaux').innerHTML
+			if(mat==""){
+				 mat = document.getElementById('matricula').value
+			}
+			
+	        tx.executeSql('CREATE TABLE IF NOT EXISTS PESSOALDIAROTEIRO (id , nome ,idroteiro, cod INTEGER PRIMARY KEY AUTOINCREMENT,Latitude,Longitude,data)');
+
+	 	    tx.executeSql("SELECT * FROM PESSOALDIAROTEIRO WHERE id = " + mat,  [], function(tx, rs){
+			var linha = rs.rows.length;
+			if(linha>0)
+		    {
+		        tx.executeSql("delete from PESSOALDIAROTEIRO WHERE id = " + mat);
+				
+			    db.transaction(mostraPessoalDiario,erroQuery);	
+				
+		    }else
+		    {
+				tx.executeSql("SELECT id, nome,idroteiro,COD FROM PESSOAL WHERE id = " + mat,  [], function(tx, rs1){
+				var linha2 = rs1.rows.length;
+				var nomepessoal = rs1.rows.item(0).nome;	
+				var idroteiroaux = rs1.rows.item(0).idroteiro;	
+				document.getElementById("nomepessoalAux").innerHTML = nomepessoal
+				
+					tx.executeSql("SELECT id, nome,idroteiro,COD FROM PESSOAL WHERE id = " + mat + " and idroteiro = " + idroteiro,  [], function(tx, rs2){
+					var linha3 = rs2.rows.length;
+					
+					if(linha3==0)
+					{
+						  tx.executeSql('INSERT INTO PESSOAL (id, nome,idroteiro,COD) VALUES (' + mat +', "' + nomepessoal + '",' + idroteiro +',NULL)')			  
+						  db.transaction(mostraPessoal,erroQuery);	
+					} }	)
+
+				})
+				
+				db.transaction(insereDadoPessoalDiario,erroDB,successoDB);							
+		    }
+		    })
+	 }
+		  
+
+	function OperaPessoal(){
+
+		   if(document.getElementById('matricula').value ==""  && document.getElementById('nomepessoal').value ==""){
+		      alert("Matricula ou Nome deve ser informado.")
+			  return false;
+		   
+		   }
+		   
+	        db.transaction(insereDadoPessoal,erroDB,successoDB);
+
+	}
+	
+	
+
+      function insereDadoPessoal(tx)
+      {
+  
+		   var mat = ""
+		   var nomepess = ""
+		   var idroteiro =  document.getElementById("idroteiro").innerHTML
+
+
+		   if(document.getElementById('matricula').value ==""){
+		      mat = "999"
+			  nomepess = document.getElementById("nomepessoal").value
+			  tx.executeSql('INSERT INTO PESSOAL (id, nome,idroteiro,COD) VALUES (' + mat +', "' + nomepess + '",' + idroteiro +',NULL)')			  
+		   }else{
+			    mat = document.getElementById('matricula').value
+
+			 	tx.executeSql("SELECT * FROM PESSOAL WHERE id = " + mat,  [], function(tx, rs){
+				var linha = rs.rows.length;
+			       if(linha>0)
+				   {
+					      var nomepess = rs.rows.item(0).nome;	
+						  document.getElementById("nomepessoal").value = nomepess
+						  tx.executeSql('INSERT INTO PESSOAL (id, nome,idroteiro,COD) VALUES (' + mat +', "' + nomepess + '",' + idroteiro +',NULL)')			  
+						  
+				   }else
+				   {
+						  nomepess = document.getElementById("nomepessoal").value
+						  tx.executeSql('INSERT INTO PESSOAL (id, nome,idroteiro,COD) VALUES (' + mat +', "' + nomepess + '",' + idroteiro +',NULL)')			  
+					  
+				   }
+				   
+				})
+			  
+		   } 
+	
+		    db.transaction(mostraPessoal,erroQuery);	
+			
+			
+		    habilitatela(3)   
+		    desabilitatela(6) 
+		    desabilitatela(7) 
+			
+			
+			db.transaction(insereDadoPessoalDiario,erroDB,successoDB);
+			
+      }  
+	
+
+	
+	 function VoltarLPessoal(){
+	 
+		    habilitatela(3)   
+		    desabilitatela(6) 
+		    desabilitatela(7) 
+	 
+	 }
+	
+     function insereDadoPessoalDiario(tx)
+     {
+	 
+	 
+			matriculaaux = document.getElementById('matriculaaux').innerHTML  
+			
+		   localizacao()
+	       Latitude =  document.getElementById("latitude").innerHTML
+		   Longitude =  document.getElementById("longitude").innerHTML
+		   var idroteiro =  document.getElementById("idroteiro").innerHTML
+  
+		   if(matriculaaux=="")
+		   {
+			   var mat = document.getElementById("matricula").value
+			   var nomepessoal = document.getElementById("nomepessoal").value
+			   if(mat=="")
+			   {
+			      mat="999"
+			   }
+			   
+			  document.getElementById("matricula").value = ""
+		      document.getElementById("nomepessoal").value = ""			   
+			   
+		   }else
+		   {
+
+	
+			   var mat = document.getElementById('matriculaaux').innerHTML  
+			   var nomepessoal = document.getElementById('nomepessoalAux').innerHTML  		
+				 
+		   }
+		  
+        
+           tx.executeSql('CREATE TABLE IF NOT EXISTS PESSOALDIAROTEIRO (id , nome ,idroteiro, cod INTEGER PRIMARY KEY AUTOINCREMENT,Latitude,Longitude,data)');
+           tx.executeSql('INSERT INTO PESSOALDIAROTEIRO (id, nome,idroteiro,COD,Latitude,Longitude,data) VALUES ('+ mat  +', "' + nomepessoal + '",'+ idroteiro +',NULL,"' + Latitude + '" ,"' + Longitude + '" , datetime ("now"))');
+
+
+		    db.transaction(mostraPessoalDiario,erroQuery);	
+			
+		    document.getElementById("matriculaaux").innerHTML = ""
+		    document.getElementById("nomepessoalAux").innerHTML = ""
+		
+	 }		
+	 
+	 
+	 
+	     function mostraPessoalDiario(tx) {
+		     		document.getElementById('pessoalD').innerHTML = ""
+				    var idroteiro =  document.getElementById("idroteiro").innerHTML
+					
+					tx.executeSql('SELECT * FROM PESSOALDIAROTEIRO  where idroteiro=' + idroteiro , [], sucessoQueryPD, erroQuery);
+					
+					
+				    db.transaction(mostraPessoal,erroQuery);	
+
+	      }
+			
+
+
+		  function sucessoQueryPD(tx, results) {
+			
+			 var  html = ""
+			 html += "<table border=1>"
+			 html += "<tr><td>MATRICULA</td><td>NOME</td><td>Data</td></tr>"
+
+			 var len = results.rows.length;
+			 for (var i=0; i<len; i++){
+			 	html += "<tr><td>" + results.rows.item(i).id + "</td><td>" + results.rows.item(i).nome + "</td><td>" + results.rows.item(i).data + "</td></tr>"				
+			 }
+			
+			
+			 html += "</table>"
+	
+			 document.getElementById('pessoalD').innerHTML += html	
+	         document.getElementById("pessoalD").style.display = 'block';
+		  }		  
+		  
+		  
+		  function Entrar(){
+
+		     if(document.getElementById('login').value =="" || document.getElementById('senha').value =="")
+			 {
+			    alert("Entre com Login e Senha.")
+				return false;
+			 }
+			 
+		     db.transaction(mostraLogin,erroQuery);	
+		  }	 
+
+
+
+	 function mostraLogin(tx) {
+
+		 
+		   	var login = document.getElementById('login').value
+		    senha  = document.getElementById('senha').value
+			
+			login = login.toUpperCase();
+			senha = senha.toUpperCase();
+	
+     		tx.executeSql("SELECT * FROM MOTORISTA where UPPER(login) ='" + login  + "' and UPPER(senha)='" +  senha + "'", [], sucessoQueryM, erroQuery);
+			
+	}
+
+
+
+	  function sucessoQueryM(tx, results) {
+		 var len = results.rows.length;
+
+		 if(len==0)	 
+		 {
+			    alert("Login ou Senha incorreto.")
+				return false;
+		 }
+		 else{
+			 for (var i=0; i<len; i++){
+			 
+			          idroteiro = results.rows.item(i).idroteiro
+					  
+					  document.getElementById("idroteiro").innerHTML = idroteiro
+			
+					 escondeRoteiro();
+					 escondeLocalizacao();
+					 escondeLogin();
+					 db.transaction(mostraPessoal,erroQuery);	
+
+			 }
+		} 
+	  }		  
+
+
+
+	  function CapturePhoto(){
+
+
+			navigator.camera.getPicture(onSuccess, onFail, { quality: 50, 
+				destinationType: Camera.DestinationType.DATAURL,
+				saveToPhotoAlbum: true
+				 }); 
+
+
+			function onSuccess(imageURI) {
+				var image = document.getElementById('minhaImagem');
+				image.style.display = "block"
+				image.src = "date.image/jpeg;base64," + imageData;;
+			}
+			
+			function onFail(message) {
+				alert('Failed because: ' + message);
+			}	  
+
+
+
+	}		 
+    </script>
+	
+</head>
+
+<body>
+
+<br>
+<!--<center><h1> <a onclick="carregaRoteiro();">Mostrar Roteiros</a> </h1></center>
+<center><h1> <a onclick="escondeRoteiro();">Esconder Roteiros</a> </h1></center>-->
+<div id="roteiros" style="display:none;">
+<h1> Escolha o roteiro: </h1>
+</div>
+
+
+<div id="acesso">
+<table align="center">
+<tr><td>Login:</td></tr>
+<tr><td><input type="text" id="login"/></td></tr>
+
+<tr><td>Senha:</td></tr>
+<tr><td><input type="password" id="senha"/></td></tr>
+
+
+<tr><td><input type="button" name="bt_login" value="Acessar" onClick="Entrar()"/></td></tr>
+
+</table>
+
+</div>
+
+
+
+
+<div id="nomeroteiro" ></div> 
+
+<div id="cadastrarpessoal" style="display:none;"></div> 
+
+<div id="pessoal"></div>
+
+<div id="pessoalD"></div>
+
+<div id="localizacao" style="display:none;">
+<!--<center><h1> <a onClick="localizacao();">Localização</a> </h1></center>-->
+</div>
+  
+<div id="latitude" style="display:none;"></div>
+<div id="longitude" style="display:none;"></div>  
+ 
+<div id="idroteiro" style="display:none;"></div> 
+<div id="matriculaaux" style="display:none;"></div> 
+<div id="nomepessoalAux" style="display:none;"></div> 
+
+<div id="deviceready" class="blink" >
+<p><button onClick="CapturePhoto()">Capturar Foto</button></p>
+<p><img style="display:none;width:250px;height:250px;" id="minhaImagem" src="" /></p>
+</div> 
+
+  
+</body>
+
+</html>
